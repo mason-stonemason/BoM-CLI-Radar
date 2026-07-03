@@ -4,9 +4,29 @@
 #include <stdbool.h>
 
 #define PROGRAM_NAME "bomcli"
-//messages
-const char* const usageMessage = "Usage: bomcli [-o | --output <filePath>] [-i | --interact] location\n";
 
+//flags
+#define OUTPUT_FLAG "--output"
+#define OUTPUT_FLAG_SHORT "-o"
+#define NO_COLOUR_FLAG "--no-colour"
+#define NO_COLOUR_FLAG_SHORT "-nc"
+#define HELP_FLAG "--help"
+#define HELP_FLAG_SHORT "-h"
+
+//messages
+static const char* const usageMessage = "Usage: bomcli ["
+				 OUTPUT_FLAG_SHORT " | "
+				 OUTPUT_FLAG "[=filePath]] ["
+				 NO_COLOUR_FLAG_SHORT " | "
+				 NO_COLOUR_FLAG "] location\n";
+static const char* const briefMessage = "bomcli - a weather radar viewer through the CLI via unicode and ANSI codes.\n"
+					"Radar imagery data is public data sourced from the Bureau of Meterology's anonymous "
+				        "and public FTP server (see https://www.bom.gov.au/catalogue/anon-ftp.shtml)\n";
+static const char* const optionsMessage = "Options:\n" OUTPUT_FLAG_SHORT ", " OUTPUT_FLAG "[=filePath]   the file path to "
+					  "send ascii radar history to, otherwise data is appended to \"bomcli.txt\" ("
+					  "log file is created in current directory if it does not exist)"
+					  "\n" NO_COLOUR_FLAG_SHORT ", " NO_COLOUR_FLAG "          removes ANSI colour encoding\n"
+					  "location                  the radar site\n";
 //error
 const char* const invalidPath = "Invalid filepath.\n";
 const char* const invalidLocation = "Invalid location.\n";
@@ -23,7 +43,7 @@ typedef enum {
 typedef struct {
 	bool output; //-o | --output
 	char* filePath; //optional filePath from --output
-	bool interact; //-i | --interact
+	bool noColour; //-nc | --no-colour
 	char* location; //suburb
 } UserValues;
 
@@ -46,6 +66,18 @@ void exit_usage(void)
 	fprintf(stderr, "%s", usageMessage);
 	exit(INVALID_USAGE_EXIT);
 }
+
+/**
+ * @brief outputs the help msg to stdout, and exits with 0
+ */
+void help_output(void)
+{
+	printf("%s\n", briefMessage);	
+	printf("%s\n", usageMessage);
+	printf("%s", optionsMessage);
+	exit(0);
+}
+
 /**
  * @brief this function parses the CLI into a UserValues struct
  * @param argc - the argument count
@@ -57,16 +89,23 @@ UserValues set_user_values(int argc, char* argv[])
 	UserValues user = {
 		.output = false,
 		.filePath = NULL,
-		.interact = false,
+		.noColour = false,
 		.location = NULL};
 
 	if (argc < 2) {
 		exit_usage();
 	}
-        
+      
+        //until i can find a better way for --help, an initial for loop will do	
+	for (int i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], HELP_FLAG) || !strcmp(argv[i], HELP_FLAG_SHORT)) {
+			help_output();
+		}
+	}
+
 	argv++;
 	while (argv[0]) {
-	    	if (!strcmp(argv[0], "-o") || !strcmp(argv[0], "--output")) {
+	    	if (!strcmp(argv[0], OUTPUT_FLAG_SHORT) || !strcmp(argv[0], OUTPUT_FLAG)) {
 			if (user.output) {
 				exit_usage(); //for duplicates
 			}
@@ -76,11 +115,11 @@ UserValues set_user_values(int argc, char* argv[])
 				user.filePath = argv[0];
 				argv++;
 			}
-		} else if (!strcmp(argv[0], "-i") || !strcmp(argv[0], "--interact")) {
-			if (user.interact) {
+		} else if (!strcmp(argv[0], NO_COLOUR_FLAG_SHORT) || !strcmp(argv[0], NO_COLOUR_FLAG)) {
+			if (user.noColour) {
 				exit_usage(); //for duplicates
 			}
-			user.interact = true;
+			user.noColour = true;
 			argv++;
 		} else {
 			if (user.location) {
@@ -122,19 +161,17 @@ void exit_file_create(void)
  */
 void file_path(UserValues* cli)
 {
+	FILE* logs;
 	if (cli->filePath) {
-		FILE* file = fopen(cli->filePath, "r");
-		if (file == NULL) {
+		logs = fopen(cli->filePath, "r");
+		if (logs == NULL) {
 			exit_file();
 		}
-		fclose(file);
 	} else {
-		FILE* file = fopen("bomcli.txt", "w");
-		if (file == NULL) {
+		logs = fopen("bomcli.txt", "w");
+		if (logs == NULL) {
 			exit_file_create();
 		}
-		fclose(file);
 	}
-
-
+	fclose(logs);
 }
