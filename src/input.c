@@ -106,6 +106,9 @@ UserValues set_user_values(int argc, char* argv[])
 			}
 			user.noColour = true;
 			argv++;
+		} else if (strncmp(argv[0], "-", 1) == 0) {
+			fprintf(stderr, "%s: %s invalid option\n", PROGRAM_NAME, argv[0]);
+			exit_usage();
 		} else {
 			if (user.location) {
 				exit_usage();
