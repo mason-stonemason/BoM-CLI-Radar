@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <string.h>
+#include <netdb.h>
 
-#define CONTROL_PORT 21
-#define DATA_PORT 20
+#define CONTROL_PORT "21"
+#define DATA_PORT "20"
 
-const char* const ftpServer = "ftp.bom.gov.au/anon/gen/";
-
+const char* const ftpServer = "ftp.bom.gov.au";
+const char* const ftpPath = "/anon/gen";
 //error
 const char* const socketError = "Unable to create socket.\n";
 const char* const imageryError = "Latest radar imagery unavailable.\n";
@@ -20,11 +22,27 @@ typedef enum {
 	EXIT_IMAGERY = 51
 } ExitCodes;
 
-int main(void)
+int ftp(void)
 {
-	int controlSocket = socket(AF_INET, SOCK_STREAM, 0);
+	struct addrinfo hints;
+	struct addrinfo* results;
+	
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	
+	int status = getaddrinfo(ftpServer, CONTROL_PORT, &hints, &results);
+	if (status != 0) {
+		//TODO: error
+	}
+
+	int controlSocket = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
 	if (controlSocket < 0) {
 		fprintf(stderr, "%s", socketError);
 		exit(EXIT_SOCKET);
+	}
+
+	if (connect(controlSocket, results->ai_addr, results->ai_addrlen) < 0) {
+		//connection error
 	}
 }
