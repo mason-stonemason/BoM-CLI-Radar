@@ -15,11 +15,12 @@ const char* const socketError = "Unable to create socket.\n";
 const char* const imageryError = "Latest radar imagery unavailable.\n";
 const char* const controlError = "Control port unavailable\n";
 const char* const dataError = "Data port unavailable\n";
-
+const char* const addrError = "getaddrinfo resulted in an error - %s\n";
 //exit codes
 typedef enum {
 	EXIT_SOCKET = 6,
-	EXIT_IMAGERY = 51
+	EXIT_IMAGERY = 51,
+	EXIT_GETADDRINFO = 21
 } ExitCodes;
 
 int ftp(void)
@@ -33,7 +34,8 @@ int ftp(void)
 	
 	int status = getaddrinfo(ftpServer, CONTROL_PORT, &hints, &results);
 	if (status != 0) {
-		//TODO: error
+		fprintf(stderr, addrError, gai_strerror(status));
+		exit(EXIT_GETADDRINFO);
 	}
 
 	int controlSocket = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
@@ -44,5 +46,9 @@ int ftp(void)
 
 	if (connect(controlSocket, results->ai_addr, results->ai_addrlen) < 0) {
 		//connection error
+		freeaddrinfo(results);
 	}
+
+	freeaddrinfo(results);
+	return controlSocket;
 }

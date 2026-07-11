@@ -6,6 +6,7 @@
 #define RESOLUTION 64
 
 int ftp(void);
+void test_render(void);
 
 int main(int argc, char* argv[])
 {
@@ -14,7 +15,10 @@ int main(int argc, char* argv[])
                 file_path(&cli);
         }
 	ftp();
-	/*
+}
+
+void test_render(void)
+{
 	//TODO: testing the unicode in a 64x64 format with ANSI colour encodings changing top and bottom half (via foreground and background).
 	printf("TIME: ################\n");
 	printf("LOCATION: ############\n");
@@ -24,5 +28,5 @@ int main(int argc, char* argv[])
 		for (int a = 0; a < RESOLUTION; a++) {
 			printf("▀");
 		}
-	}*/
+	}
 }
